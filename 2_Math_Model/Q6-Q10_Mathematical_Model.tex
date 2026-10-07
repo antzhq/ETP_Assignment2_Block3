@@ -1,0 +1,157 @@
+\documentclass[11pt,a4paper]{article}
+\usepackage[margin=2.2cm]{geometry}
+\usepackage{amsmath,amssymb,booktabs,array}
+\usepackage[T1]{fontenc}
+\usepackage{titlesec}
+\titleformat{\section}{\large\bfseries}{\thesection.}{0.6em}{}
+\setlength{\parindent}{0pt}
+\setlength{\parskip}{4pt}
+\renewcommand{\arraystretch}{1.25}
+\newcommand{\T}[1]{\text{#1}}
+\begin{document}
+{\Large\bfseries Mathematical model: hybrid CSP + PVT + wind + biomass plant}\\[2pt]
+{\small Assignment 2, Questions 6--10. Extends the Assignment 1 model; CSP and PVT physics are unchanged.}
+\vspace{6pt}
+
+\section{Sets}
+\begin{tabular}{@{}ll@{}}
+\toprule
+Symbol & Definition\\\midrule
+$\T{Days}$ & $\{\T{June},\ \T{December}\}$\\
+$\T{Hrs}$ & $\{0,1,\dots,23\}$\\
+$\T{SunHrs}_{\T{day}}$ & $\{\T{hr}\in\T{Hrs} : \T{Irradiance}_{\T{hr,day}}>0\}$, hours with sunlight\\
+$\T{Sources}$ & $\{\T{CSP},\ \T{PVT},\ \T{wind},\ \T{biomass}\}$\\
+\bottomrule
+\end{tabular}
+
+\section{Parameters}
+\textbf{Data}, for all $\T{hr}\in\T{Hrs}$, $\T{day}\in\T{Days}$:\\[2pt]
+\begin{tabular}{@{}p{0.36\textwidth}p{0.42\textwidth}p{0.16\textwidth}@{}}
+\toprule
+Symbol & Meaning & Unit\\\midrule
+$\T{Irradiance}_{\T{hr,day}}$, $\T{T}_{\T{ambient,hr,day}}$ & solar irradiance, ambient temperature (Assignment 1 file) & W/m$^2$, $^\circ$C\\
+$\T{Speed}_{\T{wind,hr,day}}$ & wind speed (Assignment 2 file, km/h $\div$ 3.6) & m/s\\
+$\T{Demand}_{\T{elec,hr,day}}$, $\T{Demand}_{\T{heat,hr,day}}$ & electricity and heat demand in that hour & GJ\\
+\bottomrule
+\end{tabular}
+
+\vspace{6pt}\textbf{CSP and PVT}: all values of Assignment 1 (reflectivity 0.95, cosine 0.86, shading and blocking 0.89, atmospheric 0.97, spillage 0.92, receiver 0.80, $\T{Eff}_{\T{rankine}}=0.42$, 220 m$^2$ per heliostat; PVT: 0.16, 0.86, 12 W/(m$^2$K), 0.65, 35 $^\circ$C, 4 m$^2$ per panel; $\T{Area}_{\T{max}}=450\,000$ m$^2$; $\T{GJ}_{\T{per W-hr}}=3.6\times10^{-6}$).
+
+\vspace{6pt}\textbf{Wind}\\[2pt]
+\begin{tabular}{@{}lll@{}}
+\toprule
+Symbol & Meaning & Value\\\midrule
+$\T{Limit}_{\T{Betz}}$ & maximum power coefficient of any turbine & $16/27=0.593$\\
+$\T{Frac}_{\T{of Betz}}$ & turbine efficiency as a fraction of the Betz limit & 0.85 (Q10: 0.75--0.95)\\
+$\T{Radius}_{\T{rotor}}$ & rotor radius & 36.5 m\\
+$\T{Density}_{\T{air}}$ & air density, sea level (Lecture 6; assumed) & 1.225 kg/m$^3$\\
+\bottomrule
+\end{tabular}
+
+\vspace{6pt}\textbf{Biomass (ethanol)}\\[2pt]
+\begin{tabular}{@{}lll@{}}
+\toprule
+Symbol & Meaning & Value\\\midrule
+$\T{HHV}_{\T{ethanol}}$ & higher heating value & 29.7 MJ/kg\\
+$\T{H}_{\T{evap water}}$ & heat of evaporation of water & 2.5 MJ/kg\\
+$\T{Mass}_{\T{water per kg ethanol}}$ & water formed per kg ethanol, $3\times18.015/46.07$ (Q2) & 1.173 kg/kg\\
+\bottomrule
+\end{tabular}
+
+\vspace{6pt}\textbf{Rules}\\[2pt]
+\begin{tabular}{@{}lll@{}}
+\toprule
+Symbol & Meaning & Value\\\midrule
+$\T{Share}_{\T{CSP,min}}$ & minimum CSP share of all electricity produced in the day (surplus included) & 0.60\\
+$\T{Weight}_{\T{unmet}}$ & penalty per GJ of unmet demand ($\gg 1$ per GJ of surplus) & 1000\\
+\bottomrule
+\end{tabular}
+
+\section{Derived parameters}
+\textbf{Energy one unit can deliver in each hour} [GJ], for all $\T{hr}$, $\T{day}$:
+\begin{align*}
+\T{Energy}_{\T{per heliostat,hr,day}} &= \T{GJ}_{\T{per W-hr}}\cdot\T{Area}_{\T{per heliostat}}\cdot\T{Eff}_{\T{CSP}}\cdot\T{Irradiance}_{\T{hr,day}}\\
+\T{Energy}_{\T{per PVT elec,hr,day}} &= \T{GJ}_{\T{per W-hr}}\cdot\T{Area}_{\T{per PVT panel}}\cdot\T{Eff}_{\T{PVT,elec}}\cdot\T{Irradiance}_{\T{hr,day}}\\
+\T{Energy}_{\T{per PVT heat,hr,day}} &= \T{GJ}_{\T{per W-hr}}\cdot\T{Area}_{\T{per PVT panel}}\cdot\T{Yield}_{\T{PVT heat,hr,day}}\qquad\text{(Assignment 1)}\\
+\T{Energy}_{\T{per turbine,hr,day}} &= \T{GJ}_{\T{per W-hr}}\cdot\tfrac12\,\T{Density}_{\T{air}}\cdot\pi\,\T{Radius}_{\T{rotor}}^2\cdot\T{Speed}_{\T{wind,hr,day}}^3\cdot\T{Coef}_{\T{power}}
+\end{align*}
+with $\T{Eff}_{\T{CSP}}=0.218$ from Assignment 1 and $\T{Coef}_{\T{power}}=\T{Frac}_{\T{of Betz}}\cdot\T{Limit}_{\T{Betz}}=0.504$.
+
+\textbf{Ethanol}. The flue gas leaves as vapour, so the heat delivered per kg is the lower heating value (as in Q5):
+\[
+\T{LHV}_{\T{ethanol}}=\T{HHV}_{\T{ethanol}}-\T{Mass}_{\T{water per kg ethanol}}\cdot\T{H}_{\T{evap water}}=26.77\ \text{MJ/kg}
+\]
+
+\section{Decision variables}
+\begin{tabular}{@{}p{0.36\textwidth}p{0.44\textwidth}p{0.14\textwidth}@{}}
+\toprule
+Symbol & Meaning & Domain\\\midrule
+$\T{Count}_{\T{heliostats}}$, $\T{Count}_{\T{PVT panels}}$, $\T{Count}_{\T{turbines}}$ & number of units installed & $\{0,1,2,\dots\}$\\
+$\T{Use}_{\T{s,hr,day}}$, $\T{s}\in\T{Sources}$ & electricity source $\T{s}$ delivers to demand in that hour & $\ge 0$ [GJ]\\
+$\T{Unmet}_{\T{hr,day}}$ & electricity demand not met in that hour & $\ge 0$ [GJ]\\
+\bottomrule
+\end{tabular}
+
+\vspace{4pt}Energy \emph{available} from the installed units in each hour [GJ]:
+\begin{align*}
+\T{Avail}_{\T{CSP,hr,day}}&=\T{Count}_{\T{heliostats}}\cdot\T{Energy}_{\T{per heliostat,hr,day}}\\
+\T{Avail}_{\T{PVT,hr,day}}&=\T{Count}_{\T{PVT panels}}\cdot\T{Energy}_{\T{per PVT elec,hr,day}}\\
+\T{Avail}_{\T{wind,hr,day}}&=\T{Count}_{\T{turbines}}\cdot\T{Energy}_{\T{per turbine,hr,day}}
+\end{align*}
+
+\section{Full model}
+\textbf{Objective}: meet as much demand as possible, then create as little surplus as possible.
+\[
+\min\ \sum_{\T{day}}\sum_{\T{hr}}\T{Weight}_{\T{unmet}}\cdot\T{Unmet}_{\T{hr,day}}\;+\;\T{Surplus}_{\T{elec}}\;+\;\T{Surplus}_{\T{heat}}
+\]
+\begin{align*}
+\T{Surplus}_{\T{elec}}&=\sum_{\T{day}}\sum_{\T{hr}}\ \sum_{\T{s}\in\{\T{CSP,PVT,wind}\}}\big(\T{Avail}_{\T{s,hr,day}}-\T{Use}_{\T{s,hr,day}}\big)\qquad\text{(generated but not used)}\\
+\T{Surplus}_{\T{heat}}&=\sum_{\T{day}}\Big(\sum_{\T{hr}\in\T{SunHrs}_{\T{day}}}\T{Count}_{\T{PVT panels}}\cdot\T{Energy}_{\T{per PVT heat,hr,day}}-\sum_{\T{hr}\in\T{SunHrs}_{\T{day}}}\T{Demand}_{\T{heat,hr,day}}\Big)
+\end{align*}
+Ethanol is burned only when needed, so it never creates surplus.
+
+\textbf{Dispatch order.} When several renewables could serve the same hour, which one is curtailed does not change the total surplus. A negligible weight ($10^{-4}$ per GJ) fixes the order: wind first (preference to wind), then CSP, then PVT (built for heat, so its electricity is the most expendable); ethanol carries $10^{-3}$ per GJ so it is used only when nothing else can serve demand.
+
+\textbf{Constraints}, for all $\T{day}\in\T{Days}$:
+
+Heat demand over the sunlit hours, unchanged from Assignment 1 (PVT is the only heat source):
+\begin{equation}\tag{C1}
+\sum_{\T{hr}\in\T{SunHrs}_{\T{day}}}\T{Count}_{\T{PVT panels}}\cdot\T{Energy}_{\T{per PVT heat,hr,day}}\ \ge\sum_{\T{hr}\in\T{SunHrs}_{\T{day}}}\T{Demand}_{\T{heat,hr,day}}
+\end{equation}
+Electricity balance in \emph{every} hour, for all $\T{hr}\in\T{Hrs}$:
+\begin{equation}\tag{C2}
+\T{Use}_{\T{CSP,hr,day}}+\T{Use}_{\T{PVT,hr,day}}+\T{Use}_{\T{wind,hr,day}}+\T{Use}_{\T{biomass,hr,day}}+\T{Unmet}_{\T{hr,day}}=\T{Demand}_{\T{elec,hr,day}}
+\end{equation}
+A source cannot deliver more than it generates, for all $\T{hr}$ and $\T{s}\in\{\T{CSP,PVT,wind}\}$:
+\begin{equation}\tag{C3}
+\T{Use}_{\T{s,hr,day}}\le\T{Avail}_{\T{s,hr,day}}
+\end{equation}
+CSP produces at least 60\% of \emph{all} electricity produced in the day, surplus included. Ethanol produces only what it delivers, so its production is $\T{Use}_{\T{biomass}}$:
+\begin{multline}\tag{C4}
+\sum_{\T{hr}\in\T{Hrs}}\T{Avail}_{\T{CSP,hr,day}}\\
+\ge\ \T{Share}_{\T{CSP,min}}\sum_{\T{hr}\in\T{Hrs}}\big(\T{Avail}_{\T{CSP,hr,day}}+\T{Avail}_{\T{PVT,hr,day}}+\T{Avail}_{\T{wind,hr,day}}+\T{Use}_{\T{biomass,hr,day}}\big)
+\end{multline}
+Preference to wind: over the day, wind delivers at least as much electricity as ethanol (the brief: ``while deciding on the share of wind and biomass, preference should be given to the wind turbine''):
+\begin{equation}\tag{C5}
+\sum_{\T{hr}\in\T{Hrs}}\T{Use}_{\T{wind,hr,day}}\ \ge\ \sum_{\T{hr}\in\T{Hrs}}\T{Use}_{\T{biomass,hr,day}}
+\end{equation}
+Site area (collectors only; the turbines stand outside the solar site):
+\begin{equation}\tag{C6}
+\T{Area}_{\T{per heliostat}}\cdot\T{Count}_{\T{heliostats}}+\T{Area}_{\T{per PVT panel}}\cdot\T{Count}_{\T{PVT panels}}\le\T{Area}_{\T{max}}
+\end{equation}
+Whole units and non-negativity:
+\begin{equation}\tag{C7}
+\T{Count}_{\T{heliostats}},\ \T{Count}_{\T{PVT panels}},\ \T{Count}_{\T{turbines}}\in\{0,1,2,\dots\};\qquad \T{Use},\ \T{Unmet}\ge0
+\end{equation}
+This is a mixed-integer linear program (three integer variables, 240 continuous ones), solved with HiGHS via \texttt{scipy.optimize.milp}.
+
+\section{Results derived from the solution}
+\textbf{Rate of ethanol combustion (Q7)}, for all $\T{hr}$, $\T{day}$ [kg per hour]:
+\[
+\T{Rate}_{\T{ethanol,hr,day}}=\frac{1000\cdot\T{Use}_{\T{biomass,hr,day}}}{\T{Eff}_{\T{rankine}}\cdot\T{LHV}_{\T{ethanol}}}
+\qquad(\text{GJ}\to\text{MJ};\ \text{divide by }3600\text{ for kg/s})
+\]
+\textbf{Wind efficiency (Q10)}: $\T{Frac}_{\T{of Betz}}$ is varied from 0.75 to 0.95. (a) With the design fixed, the total electricity output is $\sum_{\T{hr}}\big(\T{Avail}_{\T{CSP}}+\T{Avail}_{\T{PVT}}+\T{Avail}_{\T{wind}}+\T{Use}_{\T{biomass}}\big)$, with (C4) and (C5) relaxed: the units are fixed, so ethanol simply fills whatever wind does not cover. (b) The model is re-solved at each value to give the number of turbines required.
+
+\textbf{Wind--ethanol trade-off (results workbook)}: $\T{Count}_{\T{turbines}}$ is fixed at $0,2,\dots,80$ and the rest of the model is solved without (C5). This shows how much surplus each extra turbine adds and how much ethanol it replaces; the design is the smallest count at which (C5) holds on both days.
+\end{document}
